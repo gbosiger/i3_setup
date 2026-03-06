@@ -1,1 +1,5 @@
-sudo apt install kitty
+# Ubuntu packages
+kitty
+rofi
+
+

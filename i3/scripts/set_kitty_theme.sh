@@ -8,7 +8,9 @@ SOCKET_GLOB="/tmp/kitty-${USER}*"
 case "$THEME" in
   catppuccin-latte)  FILE="$DIR/latte.conf" ;;
   catppuccin-frappe) FILE="$DIR/frappe.conf" ;;
-  *) echo "Usage: kitty-theme {catppuccin-latte|catppuccin-frappe}" >&2; exit 1 ;;
+  catppuccin-macchiato) FILE="$DIR/macchiato.conf" ;;
+  catppuccin-mocha) FILE="$DIR/mocha.conf" ;;
+  *) echo "Usage: set_kitty_theme {catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha}" >&2; exit 1 ;;
 esac
 
 SOCKETS=()
