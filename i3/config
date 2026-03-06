@@ -11,7 +11,6 @@
 
 set $mod Mod4
 
-
 # Start XDG autostart .desktop files using dex. See also
 # https://wiki.archlinux.org/index.php/XDG_Autostart
 exec --no-startup-id dex --autostart --environment i3
@@ -176,3 +175,8 @@ include ~/.config/i3/kitty.conf
 # setup gtk themes
 #exec_always --no-startup-id ~/.config/i3/set-catppuccin-theme.sh
 # for now set kitty theme manually
+
+# Wallpaper
+#exec_always feh --bg-fill ~/.config/i3/wallpapers/g969.png  
+#exec_always feh --bg-fill ~/.config/i3/wallpapers/71k61pmm5kd81.jpg
+exec_always feh --bg-fill  ~/.config/i3/wallpapers/12259367.png
