@@ -180,3 +180,6 @@ include ~/.config/i3/kitty.conf
 #exec_always feh --bg-fill ~/.config/i3/wallpapers/g969.png  
 #exec_always feh --bg-fill ~/.config/i3/wallpapers/71k61pmm5kd81.jpg
 exec_always feh --bg-fill  ~/.config/i3/wallpapers/12259367.png
+
+# Session
+bindsym $mod+Control+s exec --no-startup-id systemctl suspend
