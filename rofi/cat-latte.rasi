@@ -1,9 +1,9 @@
 * {
     bg-col:  #eff1f5;
     bg-col-light: #eff1f5;
-    border-col: #bcc0cc;
+    border-col: #8839ef;
     selected-col: #ccd0da;
-    blue: #1e66f5;
+    blue: #8839ef;
     fg-col: #4c4f69;
     fg-col2: #df8e1d;
     grey: #5c5f77;
