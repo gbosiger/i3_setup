@@ -167,8 +167,8 @@ mode "resize" {
 bindsym $mod+r mode "resize"
 
 # Include theme file with variables first and then catppuccin.conf
-include ~/.config/i3/themes/catppuccin/catppuccin-macchiato
-#include ~/.config/i3/themes/catppuccin/catppuccin-latte
+#include ~/.config/i3/themes/catppuccin/catppuccin-macchiato
+include ~/.config/i3/themes/catppuccin/catppuccin-latte
 include ~/.config/i3/themes/catppuccin/catppuccin.conf
 include ~/.config/i3/globalprotect.conf
 include ~/.config/i3/gtk.conf
