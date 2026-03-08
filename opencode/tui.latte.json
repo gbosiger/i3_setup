@@ -1,3 +1,4 @@
 {
-  "theme": "catppuccin-latte"
+  "$schema": "https://opencode.ai/tui.json",
+  "theme": "system"
 }

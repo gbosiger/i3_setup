@@ -72,8 +72,36 @@ apply_links() {
   [ -f "$ROFI_DIR/$theme.rasi" ] && \
     ln -sf "$ROFI_DIR/$theme.rasi" "$ROFI_DIR/current.rasi"
 
-  [ -f "$KITTY_DIR/$theme.conf" ] && \
+  if [ -f "$KITTY_DIR/$theme.conf" ]; then
     ln -sf "$KITTY_DIR/$theme.conf" "$KITTY_DIR/current.conf"
+  fi
+}
+
+sync_opencode_mode() {
+  local theme="$1"
+  local mode="dark"
+  local kv_file="$HOME/.local/state/opencode/kv.json"
+
+  if [ "$theme" = "latte" ]; then
+    mode="light"
+  fi
+
+  if [ -f "$kv_file" ]; then
+    python3 - "$kv_file" "$mode" <<'PY'
+import json
+import sys
+
+path = sys.argv[1]
+mode = sys.argv[2]
+with open(path, 'r', encoding='utf-8') as f:
+    data = json.load(f)
+data['theme'] = 'system'
+data['theme_mode'] = mode
+with open(path, 'w', encoding='utf-8') as f:
+    json.dump(data, f, indent=2)
+    f.write('\n')
+PY
+  fi
 }
 
 reload_apps() {
@@ -82,6 +110,8 @@ reload_apps() {
   if command -v kitty >/dev/null 2>&1; then
     kitty @ set-colors -a -c "$HOME/.config/kitty/themes/current.conf" >/dev/null 2>&1 || true
   fi
+
+  pkill -USR2 -x opencode >/dev/null 2>&1 || true
 
   pkill -USR1 -x xsettingsd >/dev/null 2>&1 || true
   xrdb -merge "$HOME/.Xresources" >/dev/null 2>&1 || true
@@ -93,6 +123,7 @@ main() {
 
   apply_links "$THEME"
   apply_gnome_scheme "$THEME"
+  sync_opencode_mode "$THEME"
   reload_apps
 
   notify-send "Theme switched" "Now using Catppuccin ${THEME^}" >/dev/null 2>&1 || true
