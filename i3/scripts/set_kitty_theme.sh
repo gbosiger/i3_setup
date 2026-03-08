@@ -10,7 +10,11 @@ case "$THEME" in
   catppuccin-frappe) FILE="$DIR/frappe.conf" ;;
   catppuccin-macchiato) FILE="$DIR/macchiato.conf" ;;
   catppuccin-mocha) FILE="$DIR/mocha.conf" ;;
-  *) echo "Usage: set_kitty_theme {catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha}" >&2; exit 1 ;;
+  catppuccin-latte-opencode|catppuccin-latte-opencode-system) FILE="$DIR/latte-opencode-system.conf" ;;
+  catppuccin-frappe-opencode|catppuccin-frappe-opencode-system) FILE="$DIR/frappe-opencode-system.conf" ;;
+  catppuccin-macchiato-opencode|catppuccin-macchiato-opencode-system) FILE="$DIR/macchiato-opencode-system.conf" ;;
+  catppuccin-mocha-opencode|catppuccin-mocha-opencode-system) FILE="$DIR/mocha-opencode-system.conf" ;;
+  *) echo "Usage: set_kitty_theme {catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha|catppuccin-latte-opencode|catppuccin-frappe-opencode|catppuccin-macchiato-opencode|catppuccin-mocha-opencode}" >&2; exit 1 ;;
 esac
 
 SOCKETS=()
