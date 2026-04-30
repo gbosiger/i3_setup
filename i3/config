@@ -47,7 +47,7 @@ bindsym $mod+Shift+q kill
 # open terminal
 bindsym $mod+Return exec --no-startup-id $terminal
 
-bindsym $mod+d exec rofi run -show drun
+bindsym $mod+d exec --no-startup-id rofi -show drun -config ~/.config/rofi/config.rasi
 
 # change focus
 bindsym $mod+h focus left
@@ -90,8 +90,8 @@ bindsym $mod+e layout toggle split
 # toggle tiling / floating
 bindsym $mod+Shift+space floating toggle
 
-# change focus between tiling / floating windows
-bindsym $mod+space focus mode_toggle
+# launcher (replace regolith-style app launcher key)
+bindsym $mod+space exec --no-startup-id rofi -show drun -config ~/.config/rofi/config.rasi
 
 # focus the parent container
 bindsym $mod+a focus parent

@@ -120,8 +120,8 @@ path = pathlib.Path(sys.argv[1])
 vals = sys.argv[2:]
 
 content = path.read_text(encoding='utf-8', errors='replace') if path.exists() else ''
-start = '# BEGIN managed catppuccin i3 style'
-end = '# END managed catppuccin i3 style'
+  start = '! BEGIN managed catppuccin i3 style'
+  end = '! END managed catppuccin i3 style'
 
 lines = [
     start,
