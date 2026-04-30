@@ -11,9 +11,12 @@ fi
 STATE_FILE="$HOME/.config/catppuccin-mode"
 THEME_DIR_USER="$HOME/.themes"
 THEME_DIR_SYSTEM="/usr/share/themes"
+THEME_DIR_PROJECTS="$HOME/Projects/themes"
+THEME_DIR_PROJECT="$HOME/Project/themes"
+XDG_THEME_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/themes"
 GTK4_DIR="$HOME/.config/gtk-4.0"
-GTK4_OVERRIDE="${CATPPUCCIN_GTK4_OVERRIDE:-0}"
-GTK4_MODE="${CATPPUCCIN_GTK4_MODE:-native}"
+GTK4_OVERRIDE="${CATPPUCCIN_GTK4_OVERRIDE:-1}"
+GTK4_MODE="${CATPPUCCIN_GTK4_MODE:-override}"
 POLYBAR_THEME_DIR="$HOME/.config/polybar/themes"
 ROFI_THEME_DIR="$HOME/.config/rofi"
 I3_THEME_DIR="$HOME/.config/i3/themes/catppuccin"
@@ -167,7 +170,7 @@ PY
 
 theme_exists() {
   local name="$1"
-  [[ -d "$THEME_DIR_USER/$name" || -d "$THEME_DIR_SYSTEM/$name" ]]
+  [[ -d "$THEME_DIR_USER/$name" || -d "$THEME_DIR_SYSTEM/$name" || -d "$THEME_DIR_PROJECTS/$name" || -d "$THEME_DIR_PROJECT/$name" || -d "$XDG_THEME_DIR/$name" ]]
 }
 
 apply_gsettings() {
@@ -189,14 +192,29 @@ theme_path() {
     printf '%s\n' "$THEME_DIR_SYSTEM/$name"
     return 0
   fi
+  if [[ -d "$THEME_DIR_PROJECTS/$name" ]]; then
+    printf '%s\n' "$THEME_DIR_PROJECTS/$name"
+    return 0
+  fi
+  if [[ -d "$THEME_DIR_PROJECT/$name" ]]; then
+    printf '%s\n' "$THEME_DIR_PROJECT/$name"
+    return 0
+  fi
+  if [[ -d "$XDG_THEME_DIR/$name" ]]; then
+    printf '%s\n' "$XDG_THEME_DIR/$name"
+    return 0
+  fi
   return 1
 }
 
 set_gtk4_links() {
   local gtk_theme="$1"
   local gtk_dark_theme="$2"
+  local mode="$3"
   local base
   local dark_base
+  local base_css
+  local dark_css
 
   if ! base="$(theme_path "$gtk_theme")"; then
     warn "cannot set GTK4 links: theme '$gtk_theme' not found"
@@ -218,43 +236,25 @@ set_gtk4_links() {
     return 1
   fi
 
+  if [[ -L "$GTK4_DIR" ]]; then
+    rm -f "$GTK4_DIR"
+  fi
   mkdir -p "$GTK4_DIR"
 
-  if [[ -e "$src_dir/gtk.css" ]]; then
-    cat > "$GTK4_DIR/gtk.css" <<EOF
-@import url("file://$src_dir/gtk.css");
-
-window,
-window.background,
-.background,
-decoration,
-.titlebar,
-.headerbar,
-window.csd,
-.background.csd,
-.dialog-action-area {
-  border-radius: 0;
-  box-shadow: none;
-}
-EOF
+  base_css="$src_dir/gtk.css"
+  if [[ "$mode" == "frappe" && -e "$src_dir/gtk-dark.css" ]]; then
+    base_css="$src_dir/gtk-dark.css"
   fi
-  if [[ -e "$dark_src_dir/gtk-dark.css" ]]; then
-    cat > "$GTK4_DIR/gtk-dark.css" <<EOF
-@import url("file://$dark_src_dir/gtk-dark.css");
+  if [[ -e "$base_css" ]]; then
+    ln -sfn "$base_css" "$GTK4_DIR/gtk.css"
+  fi
 
-window,
-window.background,
-.background,
-decoration,
-.titlebar,
-.headerbar,
-window.csd,
-.background.csd,
-.dialog-action-area {
-  border-radius: 0;
-  box-shadow: none;
-}
-EOF
+  dark_css="$dark_src_dir/gtk-dark.css"
+  if [[ ! -e "$dark_css" ]]; then
+    dark_css="$dark_src_dir/gtk.css"
+  fi
+  if [[ -e "$dark_css" ]]; then
+    ln -sfn "$dark_css" "$GTK4_DIR/gtk-dark.css"
   fi
   if [[ -d "$src_dir/assets" ]]; then
     ln -sfn "$src_dir/assets" "$GTK4_DIR/assets"
@@ -262,6 +262,9 @@ EOF
 }
 
 disable_gtk4_override() {
+  if [[ -L "$GTK4_DIR" ]]; then
+    rm -f "$GTK4_DIR"
+  fi
   mkdir -p "$GTK4_DIR"
 
   rm -f "$GTK4_DIR/gtk.css"
@@ -308,7 +311,7 @@ else
 fi
 
 if ! theme_exists "$GTK_THEME"; then
-  warn "GTK theme '$GTK_THEME' not found in $THEME_DIR_USER or $THEME_DIR_SYSTEM"
+  warn "GTK theme '$GTK_THEME' not found in $THEME_DIR_USER, $THEME_DIR_SYSTEM, $THEME_DIR_PROJECTS, $THEME_DIR_PROJECT or $XDG_THEME_DIR"
 fi
 
 # GTK / GNOME settings (source of truth when available)
@@ -370,7 +373,7 @@ EOF
 if [[ "$GTK4_MODE" == "native" ]]; then
   disable_gtk4_override
 elif [[ "$GTK4_MODE" == "override" && "$GTK4_OVERRIDE" == "1" ]]; then
-  set_gtk4_links "$GTK_THEME" "$GTK_DARK" || true
+  set_gtk4_links "$GTK_THEME" "$GTK_DARK" "$MODE" || true
 else
   disable_gtk4_override
 fi
@@ -477,4 +480,11 @@ if [[ "$GTK4_MODE" == "override" && "$GTK4_OVERRIDE" == "1" ]]; then
   fi
 else
   echo "GTK4 override: off (using app/native light-dark behavior)"
+fi
+
+if [[ -f "$GTK4_DIR/gtk.css" ]]; then
+  echo "GTK4 gtk.css managed at $GTK4_DIR/gtk.css"
+fi
+if [[ -f "$GTK4_DIR/gtk-dark.css" ]]; then
+  echo "GTK4 gtk-dark.css managed at $GTK4_DIR/gtk-dark.css"
 fi
