@@ -7,6 +7,18 @@ This repo is the source of truth for my Regolith/i3 look:
 - Rofi launcher theme sync
 - Catppuccin thin-line window styling in Regolith
 
+## Important: keep Regolith defaults
+
+`~/.config/i3/config` should stay a thin wrapper that includes Regolith's base config first:
+
+```i3
+include /etc/regolith/i3/config
+include ~/.config/i3/config.d/*.conf
+```
+
+Do **not** replace it with a full standalone i3 config, or Regolith features like `mod+?` help,
+Bluetooth/system integrations, and default keybinding behavior can be overridden.
+
 ## Packages
 ```bash
 sudo apt install kitty rofi picom polybar playerctl pulseaudio-utils fonts-font-awesome fonts-noto-color-emoji

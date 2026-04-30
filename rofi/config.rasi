@@ -13,4 +13,4 @@ configuration{
 	sidebar-mode: true;
 
 }
-@theme "~/.config/rofi/cat-latte.rasi"
+@theme "~/.config/rofi/cat-frappe.rasi"
