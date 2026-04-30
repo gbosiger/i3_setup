@@ -90,6 +90,32 @@ notify_theme() {
   fi
 }
 
+sync_nvim_theme() {
+  local mode="$1"
+  local scheme background
+
+  if [[ "$mode" == "latte" ]]; then
+    scheme="catppuccin-latte"
+    background="light"
+  else
+    scheme="catppuccin-frappe"
+    background="dark"
+  fi
+
+  if command -v nvr >/dev/null 2>&1; then
+    local server
+    while IFS= read -r server; do
+      [[ -n "$server" ]] || continue
+      nvr --nostart --servername "$server" \
+        -c "set background=$background" \
+        -c "colorscheme $scheme" \
+        -c "redraw" \
+        -c "silent! doautocmd ColorScheme" \
+        >/dev/null 2>&1 || true
+    done < <(nvr --serverlist 2>/dev/null || true)
+  fi
+}
+
 sync_regolith_style() {
   local mode="$1"
   mkdir -p "$HOME/.config/regolith3"
@@ -120,8 +146,8 @@ path = pathlib.Path(sys.argv[1])
 vals = sys.argv[2:]
 
 content = path.read_text(encoding='utf-8', errors='replace') if path.exists() else ''
-  start = '! BEGIN managed catppuccin i3 style'
-  end = '! END managed catppuccin i3 style'
+start = '! BEGIN managed catppuccin i3 style'
+end = '! END managed catppuccin i3 style'
 
 lines = [
     start,
@@ -464,6 +490,8 @@ if [[ -x "$KITTY_THEME_SCRIPT" ]]; then
 else
   warn "kitty theme script not executable: $KITTY_THEME_SCRIPT"
 fi
+
+sync_nvim_theme "$MODE"
 
 notify_theme "$MODE"
 

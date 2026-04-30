@@ -177,6 +177,7 @@ include ~/.config/i3/themes/catppuccin/catppuccin.conf
 include ~/.config/i3/globalprotect.conf
 include ~/.config/i3/gtk.conf
 include ~/.config/i3/kitty.conf
+include ~/.config/i3/config.d/*.conf
 # setup gtk themes
 #exec_always --no-startup-id ~/.config/i3/set-catppuccin-theme.sh
 # for now set kitty theme manually
