@@ -14,6 +14,8 @@ THEME_DIR_SYSTEM="/usr/share/themes"
 THEME_DIR_PROJECTS="$HOME/Projects/themes"
 THEME_DIR_PROJECT="$HOME/Project/themes"
 XDG_THEME_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/themes"
+ICON_DIR_USER="${XDG_DATA_HOME:-$HOME/.local/share}/icons"
+ICON_DIR_SYSTEM="/usr/share/icons"
 GTK4_DIR="$HOME/.config/gtk-4.0"
 GTK4_OVERRIDE="${CATPPUCCIN_GTK4_OVERRIDE:-1}"
 GTK4_MODE="${CATPPUCCIN_GTK4_MODE:-override}"
@@ -106,12 +108,21 @@ sync_nvim_theme() {
     local server
     while IFS= read -r server; do
       [[ -n "$server" ]] || continue
-      nvr --nostart --servername "$server" \
-        -c "set background=$background" \
-        -c "colorscheme $scheme" \
-        -c "redraw" \
-        -c "silent! doautocmd ColorScheme" \
-        >/dev/null 2>&1 || true
+      if command -v timeout >/dev/null 2>&1; then
+        timeout 1s nvr --nostart --servername "$server" \
+          -c "set background=$background" \
+          -c "colorscheme $scheme" \
+          -c "redraw" \
+          -c "silent! doautocmd ColorScheme" \
+          >/dev/null 2>&1 || true
+      else
+        nvr --nostart --servername "$server" \
+          -c "set background=$background" \
+          -c "colorscheme $scheme" \
+          -c "redraw" \
+          -c "silent! doautocmd ColorScheme" \
+          >/dev/null 2>&1 || true
+      fi
     done < <(nvr --serverlist 2>/dev/null || true)
   fi
 }
@@ -229,6 +240,19 @@ theme_path() {
   fi
   if [[ -d "$XDG_THEME_DIR/$name" ]]; then
     printf '%s\n' "$XDG_THEME_DIR/$name"
+    return 0
+  fi
+  return 1
+}
+
+icon_theme_path() {
+  local name="$1"
+  if [[ -d "$ICON_DIR_USER/$name" ]]; then
+    printf '%s\n' "$ICON_DIR_USER/$name"
+    return 0
+  fi
+  if [[ -d "$ICON_DIR_SYSTEM/$name" ]]; then
+    printf '%s\n' "$ICON_DIR_SYSTEM/$name"
     return 0
   fi
   return 1
@@ -416,7 +440,12 @@ EOF
 
 # Papirus folder color, if available
 if command -v papirus-folders >/dev/null 2>&1; then
-  papirus-folders -C "$PAPIRUS_COLOR" --theme "$ICON_THEME" >/dev/null 2>&1 || true
+  icon_path="$(icon_theme_path "$ICON_THEME" || true)"
+  if [[ -n "$icon_path" && -w "$icon_path" ]]; then
+    papirus-folders -C "$PAPIRUS_COLOR" --theme "$ICON_THEME" >/dev/null 2>&1 || true
+  else
+    warn "skipping papirus-folders for '$ICON_THEME' (theme is not user-writable; avoids auth prompt)"
+  fi
 fi
 
 # Polybar theme sync (best effort)
