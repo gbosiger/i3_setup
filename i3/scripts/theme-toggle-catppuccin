@@ -116,6 +116,7 @@ sync_nvim_theme() {
   fi
 }
 
+
 sync_regolith_style() {
   local mode="$1"
   mkdir -p "$HOME/.config/regolith3"

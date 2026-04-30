@@ -24,7 +24,7 @@
       "alignment": "left",
       "segments": [
         {
-          "background": "p:green",
+          "background": "p:mauve",
           "foreground": "p:base",
           "properties": {
             "display_host": false
@@ -36,7 +36,7 @@
         {
           "background": "p:blue",
           "foreground": "p:base",
-          "powerline_symbol": "\ue0b0",
+          "powerline_symbol": "\ue0b4",
           "properties": {
             "folder_icon": "\uf115",
             "folder_separator_icon": " \ue0b1 ",
@@ -49,21 +49,21 @@
         },
         {
           "properties": {
-            "branch_icon": "\uE0A0 ",
+            "branch_icon": "\ue0a0 ",
             "fetch_stash_count": true,
             "fetch_status": true
           },
-          "trailing_diamond": "\ue0b0",
+          "powerline_symbol": "\ue0b4",
           "template": " {{ .UpstreamIcon }}{{ .HEAD }} ",
           "foreground": "p:blue",
           "background": "p:surface0",
           "type": "git",
-          "style": "diamond"
+          "style": "powerline"
         },
         {
           "background": "p:mantle",
           "foreground": "p:text",
-          "trailing_diamond": "\ue0b0",
+          "trailing_diamond": "\ue0b4",
           "style": "diamond",
           "type": "os"
         }
