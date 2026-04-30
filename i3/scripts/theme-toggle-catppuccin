@@ -163,6 +163,7 @@ end = '! END managed catppuccin i3 style'
 
 lines = [
     start,
+    'wm.program.logout: ~/.config/i3/scripts/session-menu-rofi.sh',
     f'wm.client.focused.color.border: {vals[0]}',
     f'wm.client.focused.color.background: {vals[1]}',
     f'wm.client.focused.color.text: {vals[2]}',

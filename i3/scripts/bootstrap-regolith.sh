@@ -36,6 +36,7 @@ def upsert_line(text, key, value):
 
 content = upsert_line(content, 'wm.bar.mode', 'invisible')
 content = upsert_line(content, 'wm.bar.status_command', '/bin/true')
+content = upsert_line(content, 'wm.program.logout', '~/.config/i3/scripts/session-menu-rofi.sh')
 
 path.write_text(content, encoding='utf-8')
 PY
