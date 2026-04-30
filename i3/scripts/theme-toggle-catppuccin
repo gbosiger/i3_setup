@@ -1,0 +1,480 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+  echo "Do not run this script with sudo/root." >&2
+  echo "Run as your regular user so gsettings applies to your desktop session." >&2
+  echo "Example: theme-toggle-catppuccin latte" >&2
+  exit 1
+fi
+
+STATE_FILE="$HOME/.config/catppuccin-mode"
+THEME_DIR_USER="$HOME/.themes"
+THEME_DIR_SYSTEM="/usr/share/themes"
+GTK4_DIR="$HOME/.config/gtk-4.0"
+GTK4_OVERRIDE="${CATPPUCCIN_GTK4_OVERRIDE:-0}"
+GTK4_MODE="${CATPPUCCIN_GTK4_MODE:-native}"
+POLYBAR_THEME_DIR="$HOME/.config/polybar/themes"
+ROFI_THEME_DIR="$HOME/.config/rofi"
+I3_THEME_DIR="$HOME/.config/i3/themes/catppuccin"
+REGOLITH_XRES="$HOME/.config/regolith3/Xresources"
+
+# Change these after checking `ls ~/.themes | grep -i catppuccin`
+GTK_LIGHT="Catppuccin-Mauve-Light"
+GTK_DARK="Catppuccin-Mauve-Dark-Frappe"
+
+ICON_LIGHT="Papirus"
+ICON_DARK="Papirus"
+
+# Change these if you install Catppuccin cursors and know the exact names.
+CURSOR_LIGHT="Yaru"
+CURSOR_DARK="Yaru"
+
+warn() {
+  printf 'Warning: %s\n' "$*" >&2
+}
+
+notify_error() {
+  local msg="$1"
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify \
+      -a "theme-toggle" \
+      -u critical \
+      -i dialog-error \
+      -h string:x-dunst-stack-tag:theme-toggle-error \
+      "Theme switch failed" "$msg" >/dev/null 2>&1 || true
+  fi
+  if command -v zenity >/dev/null 2>&1; then
+    zenity --error --title="Theme switch failed" --text="$msg" >/dev/null 2>&1 || true
+  fi
+}
+
+on_error() {
+  local code=$?
+  local line=${1:-unknown}
+  local cmd=${2:-unknown}
+  notify_error "Line $line failed. Command: $cmd"
+  exit "$code"
+}
+
+trap 'on_error "$LINENO" "$BASH_COMMAND"' ERR
+
+notify_theme() {
+  local mode="$1"
+  local title body icon urgency
+
+  if [[ "$mode" == "latte" ]]; then
+    title="Theme: Catppuccin Latte"
+    body="Light mode enabled"
+    icon="weather-clear"
+    urgency="low"
+  else
+    title="Theme: Catppuccin Frappe"
+    body="Dark mode enabled"
+    icon="weather-clear-night"
+    urgency="low"
+  fi
+
+  if command -v dunstify >/dev/null 2>&1; then
+    dunstify \
+      -a "theme-toggle" \
+      -u "$urgency" \
+      -i "$icon" \
+      -h string:x-dunst-stack-tag:theme-toggle \
+      "$title" "$body" >/dev/null 2>&1 || true
+  else
+    notify-send "$title" "$body" -i "$icon" >/dev/null 2>&1 || true
+  fi
+}
+
+sync_regolith_style() {
+  local mode="$1"
+  mkdir -p "$HOME/.config/regolith3"
+  touch "$REGOLITH_XRES"
+
+  local focused_border focused_bg focused_text focused_indicator focused_child
+  local fi_border fi_bg fi_text fi_indicator fi_child
+  local unf_border unf_bg unf_text unf_indicator unf_child
+  local urg_border urg_bg urg_text urg_indicator urg_child
+
+  if [[ "$mode" == "latte" ]]; then
+    focused_border="#8839ef"; focused_bg="#8839ef"; focused_text="#8839ef"; focused_indicator="#eff1f5"; focused_child="#7287fd"
+    fi_border="#1e66f5"; fi_bg="#1e66f5"; fi_text="#1e66f5"; fi_indicator="#eff1f5"; fi_child="#eff1f5"
+    unf_border="#eff1f5"; unf_bg="#9ca0b0"; unf_text="#9ca0b0"; unf_indicator="#eff1f5"; unf_child="#eff1f5"
+    urg_border="#fe640b"; urg_bg="#eff1f5"; urg_text="#eff1f5"; urg_indicator="#7c7f93"; urg_child="#fe640b"
+  else
+    focused_border="#ca9ee6"; focused_bg="#ca9ee6"; focused_text="#ca9ee6"; focused_indicator="#303446"; focused_child="#babbf1"
+    fi_border="#8caaee"; fi_bg="#8caaee"; fi_text="#8caaee"; fi_indicator="#303446"; fi_child="#303446"
+    unf_border="#303446"; unf_bg="#626880"; unf_text="#626880"; unf_indicator="#303446"; unf_child="#303446"
+    urg_border="#ef9f76"; urg_bg="#303446"; urg_text="#303446"; urg_indicator="#737994"; urg_child="#ef9f76"
+  fi
+
+  python3 - "$REGOLITH_XRES" "$focused_border" "$focused_bg" "$focused_text" "$focused_indicator" "$focused_child" "$fi_border" "$fi_bg" "$fi_text" "$fi_indicator" "$fi_child" "$unf_border" "$unf_bg" "$unf_text" "$unf_indicator" "$unf_child" "$urg_border" "$urg_bg" "$urg_text" "$urg_indicator" "$urg_child" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+vals = sys.argv[2:]
+
+content = path.read_text(encoding='utf-8', errors='replace') if path.exists() else ''
+start = '# BEGIN managed catppuccin i3 style'
+end = '# END managed catppuccin i3 style'
+
+lines = [
+    start,
+    f'wm.client.focused.color.border: {vals[0]}',
+    f'wm.client.focused.color.background: {vals[1]}',
+    f'wm.client.focused.color.text: {vals[2]}',
+    f'wm.client.focused.color.indicator: {vals[3]}',
+    f'wm.client.focused.color.child_border: {vals[4]}',
+    f'wm.client.focused_inactive.color.border: {vals[5]}',
+    f'wm.client.focused_inactive.color.background: {vals[6]}',
+    f'wm.client.focused_inactive.color.text: {vals[7]}',
+    f'wm.client.focused_inactive.color.indicator: {vals[8]}',
+    f'wm.client.focused_inactive.color.child_border: {vals[9]}',
+    f'wm.client.unfocused.color.border: {vals[10]}',
+    f'wm.client.unfocused.color.background: {vals[11]}',
+    f'wm.client.unfocused.color.text: {vals[12]}',
+    f'wm.client.unfocused.color.indicator: {vals[13]}',
+    f'wm.client.unfocused.color.child_border: {vals[14]}',
+    f'wm.client.urgent.color.border: {vals[15]}',
+    f'wm.client.urgent.color.background: {vals[16]}',
+    f'wm.client.urgent.color.text: {vals[17]}',
+    f'wm.client.urgent.color.indicator: {vals[18]}',
+    f'wm.client.urgent.color.child_border: {vals[19]}',
+    'wm.window.border.style: pixel',
+    'wm.window.border.size: 1',
+    'wm.floatingwindow.border.style: pixel',
+    'wm.floatingwindow.border.size: 1',
+    end,
+]
+block = '\n'.join(lines) + '\n'
+
+if start in content and end in content:
+    before, rest = content.split(start, 1)
+    _, after = rest.split(end, 1)
+    new_content = before + block + after.lstrip('\n')
+else:
+    if content and not content.endswith('\n'):
+        content += '\n'
+    new_content = content + block
+
+path.write_text(new_content, encoding='utf-8')
+PY
+
+  xrdb -merge "$REGOLITH_XRES" >/dev/null 2>&1 || true
+}
+
+theme_exists() {
+  local name="$1"
+  [[ -d "$THEME_DIR_USER/$name" || -d "$THEME_DIR_SYSTEM/$name" ]]
+}
+
+apply_gsettings() {
+  local key="$1"
+  local value="$2"
+  if ! gsettings set org.gnome.desktop.interface "$key" "$value" 2>/dev/null; then
+    warn "could not set gsettings key '$key' to '$value'"
+    return 1
+  fi
+}
+
+theme_path() {
+  local name="$1"
+  if [[ -d "$THEME_DIR_USER/$name" ]]; then
+    printf '%s\n' "$THEME_DIR_USER/$name"
+    return 0
+  fi
+  if [[ -d "$THEME_DIR_SYSTEM/$name" ]]; then
+    printf '%s\n' "$THEME_DIR_SYSTEM/$name"
+    return 0
+  fi
+  return 1
+}
+
+set_gtk4_links() {
+  local gtk_theme="$1"
+  local gtk_dark_theme="$2"
+  local base
+  local dark_base
+
+  if ! base="$(theme_path "$gtk_theme")"; then
+    warn "cannot set GTK4 links: theme '$gtk_theme' not found"
+    return 1
+  fi
+  if ! dark_base="$(theme_path "$gtk_dark_theme")"; then
+    warn "cannot set GTK4 dark link: theme '$gtk_dark_theme' not found"
+    return 1
+  fi
+
+  local src_dir="$base/gtk-4.0"
+  local dark_src_dir="$dark_base/gtk-4.0"
+  if [[ ! -d "$src_dir" ]]; then
+    warn "cannot set GTK4 links: missing '$src_dir'"
+    return 1
+  fi
+  if [[ ! -d "$dark_src_dir" ]]; then
+    warn "cannot set GTK4 dark link: missing '$dark_src_dir'"
+    return 1
+  fi
+
+  mkdir -p "$GTK4_DIR"
+
+  if [[ -e "$src_dir/gtk.css" ]]; then
+    cat > "$GTK4_DIR/gtk.css" <<EOF
+@import url("file://$src_dir/gtk.css");
+
+window,
+window.background,
+.background,
+decoration,
+.titlebar,
+.headerbar,
+window.csd,
+.background.csd,
+.dialog-action-area {
+  border-radius: 0;
+  box-shadow: none;
+}
+EOF
+  fi
+  if [[ -e "$dark_src_dir/gtk-dark.css" ]]; then
+    cat > "$GTK4_DIR/gtk-dark.css" <<EOF
+@import url("file://$dark_src_dir/gtk-dark.css");
+
+window,
+window.background,
+.background,
+decoration,
+.titlebar,
+.headerbar,
+window.csd,
+.background.csd,
+.dialog-action-area {
+  border-radius: 0;
+  box-shadow: none;
+}
+EOF
+  fi
+  if [[ -d "$src_dir/assets" ]]; then
+    ln -sfn "$src_dir/assets" "$GTK4_DIR/assets"
+  fi
+}
+
+disable_gtk4_override() {
+  mkdir -p "$GTK4_DIR"
+
+  rm -f "$GTK4_DIR/gtk.css"
+  rm -f "$GTK4_DIR/gtk-dark.css"
+
+  if [[ -L "$GTK4_DIR/assets" || -f "$GTK4_DIR/assets" ]]; then
+    rm -f "$GTK4_DIR/assets"
+  fi
+}
+
+if [[ "${1:-toggle}" == "latte" || "${1:-toggle}" == "light" ]]; then
+  MODE="latte"
+elif [[ "${1:-toggle}" == "frappe" || "${1:-toggle}" == "dark" ]]; then
+  MODE="frappe"
+else
+  if [[ -f "$STATE_FILE" && "$(cat "$STATE_FILE")" == "frappe" ]]; then
+    MODE="latte"
+  else
+    MODE="frappe"
+  fi
+fi
+
+mkdir -p "$(dirname "$STATE_FILE")"
+echo "$MODE" > "$STATE_FILE"
+
+if [[ "$MODE" == "latte" ]]; then
+  GTK_THEME="$GTK_LIGHT"
+  ICON_THEME="$ICON_LIGHT"
+  CURSOR_THEME="$CURSOR_LIGHT"
+  COLOR_SCHEME="prefer-light"
+  PAPIRUS_COLOR="cat-latte-mauve"
+  POLYBAR_THEME="latte.ini"
+  ROFI_THEME="cat-latte.rasi"
+  I3_THEME_FILE="catppuccin-latte"
+else
+  GTK_THEME="$GTK_DARK"
+  ICON_THEME="$ICON_DARK"
+  CURSOR_THEME="$CURSOR_DARK"
+  COLOR_SCHEME="prefer-dark"
+  PAPIRUS_COLOR="cat-frappe-mauve"
+  POLYBAR_THEME="frappe.ini"
+  ROFI_THEME="cat-frappe.rasi"
+  I3_THEME_FILE="catppuccin-frappe"
+fi
+
+if ! theme_exists "$GTK_THEME"; then
+  warn "GTK theme '$GTK_THEME' not found in $THEME_DIR_USER or $THEME_DIR_SYSTEM"
+fi
+
+# GTK / GNOME settings (source of truth when available)
+gsettings_ok=0
+if command -v gsettings >/dev/null 2>&1; then
+  gsettings_ok=1
+  apply_gsettings gtk-theme "$GTK_THEME" || gsettings_ok=0
+  apply_gsettings icon-theme "$ICON_THEME" || gsettings_ok=0
+  apply_gsettings cursor-theme "$CURSOR_THEME" || gsettings_ok=0
+  apply_gsettings color-scheme "$COLOR_SCHEME" || gsettings_ok=0
+else
+  warn "gsettings command not found; applying file-based fallbacks only"
+fi
+
+if [[ "$gsettings_ok" -eq 0 ]]; then
+  warn "gsettings was not fully applied; fallbacks will still be written"
+fi
+
+# Headerbar controls: close button only (no minimize/maximize)
+apply_gsettings button-layout ':close' || true
+
+# GTK2 fallback
+mkdir -p "$HOME"
+cat > "$HOME/.gtkrc-2.0" <<EOF
+gtk-theme-name="$GTK_THEME"
+gtk-icon-theme-name="$ICON_THEME"
+gtk-cursor-theme-name="$CURSOR_THEME"
+EOF
+
+# GTK2 (legacy alternate path used by some setups)
+cat > "$HOME/.config/gtkrc" <<EOF
+gtk-theme-name="$GTK_THEME"
+gtk-icon-theme-name="$ICON_THEME"
+gtk-cursor-theme-name="$CURSOR_THEME"
+EOF
+
+# GTK3 fallback
+mkdir -p "$HOME/.config/gtk-3.0"
+cat > "$HOME/.config/gtk-3.0/settings.ini" <<EOF
+[Settings]
+gtk-theme-name=$GTK_THEME
+gtk-icon-theme-name=$ICON_THEME
+gtk-cursor-theme-name=$CURSOR_THEME
+gtk-application-prefer-dark-theme=$([[ "$MODE" == "frappe" ]] && echo true || echo false)
+gtk-decoration-layout=:close
+EOF
+
+# GTK4 fallback: this mainly sets preference; full GTK4 theming depends on copied theme CSS.
+mkdir -p "$HOME/.config/gtk-4.0"
+cat > "$HOME/.config/gtk-4.0/settings.ini" <<EOF
+[Settings]
+gtk-theme-name=$GTK_THEME
+gtk-icon-theme-name=$ICON_THEME
+gtk-cursor-theme-name=$CURSOR_THEME
+gtk-application-prefer-dark-theme=$([[ "$MODE" == "frappe" ]] && echo true || echo false)
+gtk-decoration-layout=:close
+EOF
+
+if [[ "$GTK4_MODE" == "native" ]]; then
+  disable_gtk4_override
+elif [[ "$GTK4_MODE" == "override" && "$GTK4_OVERRIDE" == "1" ]]; then
+  set_gtk4_links "$GTK_THEME" "$GTK_DARK" || true
+else
+  disable_gtk4_override
+fi
+
+# xsettingsd fallback for WM sessions that rely on XSETTINGS
+mkdir -p "$HOME/.config/xsettingsd"
+cat > "$HOME/.config/xsettingsd/xsettingsd.conf" <<EOF
+Net/ThemeName "$GTK_THEME"
+Net/IconThemeName "$ICON_THEME"
+Gtk/CursorThemeName "$CURSOR_THEME"
+Gtk/CursorThemeSize 24
+EOF
+
+# Papirus folder color, if available
+if command -v papirus-folders >/dev/null 2>&1; then
+  papirus-folders -C "$PAPIRUS_COLOR" --theme "$ICON_THEME" >/dev/null 2>&1 || true
+fi
+
+# Polybar theme sync (best effort)
+if [[ -f "$POLYBAR_THEME_DIR/$POLYBAR_THEME" ]]; then
+  ln -sfn "$POLYBAR_THEME_DIR/$POLYBAR_THEME" "$POLYBAR_THEME_DIR/current.ini"
+  if [[ -x "$HOME/.config/polybar/launch.sh" ]]; then
+    nohup "$HOME/.config/polybar/launch.sh" >/dev/null 2>&1 & disown || true
+  fi
+else
+  warn "polybar theme file not found: $POLYBAR_THEME_DIR/$POLYBAR_THEME"
+fi
+
+# Rofi launcher theme sync (best effort)
+if [[ -f "$ROFI_THEME_DIR/$ROFI_THEME" ]]; then
+  if [[ -f "$ROFI_THEME_DIR/config.rasi" ]]; then
+    python3 - "$ROFI_THEME_DIR/config.rasi" "$ROFI_THEME" <<'PY'
+import re
+import sys
+
+path = sys.argv[1]
+theme = sys.argv[2]
+
+with open(path, 'r', encoding='utf-8') as f:
+    content = f.read()
+
+line = f'@theme "~/.config/rofi/{theme}"'
+if re.search(r'^\s*@theme\s+".*"\s*$', content, flags=re.M):
+    content = re.sub(r'^\s*@theme\s+".*"\s*$', line, content, flags=re.M)
+else:
+    if not content.endswith('\n'):
+        content += '\n'
+    content += line + '\n'
+
+with open(path, 'w', encoding='utf-8') as f:
+    f.write(content)
+PY
+  else
+    warn "rofi config not found: $ROFI_THEME_DIR/config.rasi"
+  fi
+else
+  warn "rofi theme file not found: $ROFI_THEME_DIR/$ROFI_THEME"
+fi
+
+# Regolith refresh can re-apply the active Regolith profile and override
+# GTK theme changes. Keep it opt-in.
+if [[ "${REGOLITH_REFRESH_AFTER_THEME:-0}" == "1" ]] && command -v regolith-look >/dev/null 2>&1; then
+  regolith-look refresh >/dev/null 2>&1 || true
+fi
+
+# i3 theme palette sync for thin-line window styling
+if [[ -f "$I3_THEME_DIR/$I3_THEME_FILE" ]]; then
+  ln -sfn "$I3_THEME_DIR/$I3_THEME_FILE" "$I3_THEME_DIR/catppuccin-current"
+else
+  warn "i3 theme file not found: $I3_THEME_DIR/$I3_THEME_FILE"
+fi
+
+sync_regolith_style "$MODE"
+
+# i3 refresh
+if command -v i3-msg >/dev/null 2>&1; then
+  i3-msg reload >/dev/null 2>&1 || true
+fi
+
+# Kitty theme sync (best effort)
+KITTY_THEME_SCRIPT="$HOME/Projects/i3_setup/i3/scripts/set_kitty_theme.sh"
+if [[ -x "$KITTY_THEME_SCRIPT" ]]; then
+  if [[ "$MODE" == "latte" ]]; then
+    "$KITTY_THEME_SCRIPT" catppuccin-latte >/dev/null 2>&1 || warn "kitty theme sync failed"
+  else
+    "$KITTY_THEME_SCRIPT" catppuccin-frappe >/dev/null 2>&1 || warn "kitty theme sync failed"
+  fi
+else
+  warn "kitty theme script not executable: $KITTY_THEME_SCRIPT"
+fi
+
+notify_theme "$MODE"
+
+echo "Switched to Catppuccin $MODE"
+echo "Color scheme -> $COLOR_SCHEME"
+echo "GTK theme -> $GTK_THEME"
+if [[ "$GTK4_MODE" == "override" && "$GTK4_OVERRIDE" == "1" ]]; then
+  if [[ -L "$GTK4_DIR/gtk.css" ]]; then
+    echo "GTK4 override: on"
+    echo "GTK4 gtk.css -> $(readlink "$GTK4_DIR/gtk.css")"
+  fi
+  if [[ -L "$GTK4_DIR/gtk-dark.css" ]]; then
+    echo "GTK4 gtk-dark.css -> $(readlink "$GTK4_DIR/gtk-dark.css")"
+  fi
+else
+  echo "GTK4 override: off (using app/native light-dark behavior)"
+fi
