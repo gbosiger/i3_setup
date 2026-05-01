@@ -33,10 +33,6 @@ GTK_DARK="Catppuccin-Mauve-Dark-Frappe"
 ICON_LIGHT="Papirus"
 ICON_DARK="Papirus"
 
-# Cursor themes per mode.
-CURSOR_LIGHT="DMZ-Black"
-CURSOR_DARK="DMZ-White"
-
 warn() {
   printf 'Warning: %s\n' "$*" >&2
 }
@@ -382,7 +378,6 @@ echo "$MODE" > "$STATE_FILE"
 if [[ "$MODE" == "latte" ]]; then
   GTK_THEME="$GTK_LIGHT"
   ICON_THEME="$ICON_LIGHT"
-  CURSOR_THEME="$CURSOR_LIGHT"
   COLOR_SCHEME="prefer-light"
   PAPIRUS_COLOR="cat-latte-mauve"
   POLYBAR_THEME="latte.ini"
@@ -392,7 +387,6 @@ if [[ "$MODE" == "latte" ]]; then
 else
   GTK_THEME="$GTK_DARK"
   ICON_THEME="$ICON_DARK"
-  CURSOR_THEME="$CURSOR_DARK"
   COLOR_SCHEME="prefer-dark"
   PAPIRUS_COLOR="cat-frappe-mauve"
   POLYBAR_THEME="frappe.ini"
@@ -411,7 +405,6 @@ if command -v gsettings >/dev/null 2>&1; then
   gsettings_ok=1
   apply_gsettings gtk-theme "$GTK_THEME" || gsettings_ok=0
   apply_gsettings icon-theme "$ICON_THEME" || gsettings_ok=0
-  apply_gsettings cursor-theme "$CURSOR_THEME" || gsettings_ok=0
   apply_gsettings color-scheme "$COLOR_SCHEME" || gsettings_ok=0
 else
   warn "gsettings command not found; applying file-based fallbacks only"
@@ -429,14 +422,12 @@ mkdir -p "$HOME"
 cat > "$HOME/.gtkrc-2.0" <<EOF
 gtk-theme-name="$GTK_THEME"
 gtk-icon-theme-name="$ICON_THEME"
-gtk-cursor-theme-name="$CURSOR_THEME"
 EOF
 
 # GTK2 (legacy alternate path used by some setups)
 cat > "$HOME/.config/gtkrc" <<EOF
 gtk-theme-name="$GTK_THEME"
 gtk-icon-theme-name="$ICON_THEME"
-gtk-cursor-theme-name="$CURSOR_THEME"
 EOF
 
 # GTK3 fallback
@@ -445,7 +436,6 @@ cat > "$HOME/.config/gtk-3.0/settings.ini" <<EOF
 [Settings]
 gtk-theme-name=$GTK_THEME
 gtk-icon-theme-name=$ICON_THEME
-gtk-cursor-theme-name=$CURSOR_THEME
 gtk-application-prefer-dark-theme=$([[ "$MODE" == "frappe" ]] && echo true || echo false)
 gtk-decoration-layout=:close
 EOF
@@ -456,7 +446,6 @@ cat > "$HOME/.config/gtk-4.0/settings.ini" <<EOF
 [Settings]
 gtk-theme-name=$GTK_THEME
 gtk-icon-theme-name=$ICON_THEME
-gtk-cursor-theme-name=$CURSOR_THEME
 gtk-application-prefer-dark-theme=$([[ "$MODE" == "frappe" ]] && echo true || echo false)
 gtk-decoration-layout=:close
 EOF
@@ -474,8 +463,6 @@ mkdir -p "$HOME/.config/xsettingsd"
 cat > "$HOME/.config/xsettingsd/xsettingsd.conf" <<EOF
 Net/ThemeName "$GTK_THEME"
 Net/IconThemeName "$ICON_THEME"
-Gtk/CursorThemeName "$CURSOR_THEME"
-Gtk/CursorThemeSize 24
 EOF
 
 # Papirus folder color, if available

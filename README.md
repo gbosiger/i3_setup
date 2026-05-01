@@ -1,7 +1,7 @@
 # i3_setup for Regolith
 
 This repo is the source of truth for my Regolith/i3 look:
-- GTK + icon + cursor theme switching (Latte/Frappe)
+- GTK + icon theme switching (Latte/Frappe)
 - Kitty theme sync
 - Polybar theme sync
 - Rofi launcher theme sync
@@ -21,7 +21,7 @@ Bluetooth/system integrations, and default keybinding behavior can be overridden
 
 ## Packages
 ```bash
-sudo apt install kitty rofi picom polybar playerctl pulseaudio-utils fonts-font-awesome fonts-noto-color-emoji bibata-cursor-theme
+sudo apt install kitty rofi picom polybar playerctl pulseaudio-utils fonts-font-awesome fonts-noto-color-emoji xsettingsd
 ```
 
 ## Catppuccin GTK requirement
@@ -38,7 +38,6 @@ Optional environment variables (useful for apps that read GTK vars directly):
 ```bash
 export GTK_THEME="Catppuccin-Mauve-Dark-Frappe"
 export GTK_ICON_THEME="Papirus"
-export GTK_CURSOR_THEME="Bibata-Modern-Classic"
 ```
 
 The script also supports these GTK4 controls:

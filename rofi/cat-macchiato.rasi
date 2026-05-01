@@ -85,15 +85,15 @@ mode-switcher {
 
 button {
     padding: 10px;
-    background-color: @bg-col-light;
-    text-color: @grey;
+    background-color: @selected-col;
+    text-color: @blue;
     vertical-align: 0.5; 
     horizontal-align: 0.5;
 }
 
 button selected {
-  background-color: @selected-col;
-  text-color: @blue;
+  background-color: @bg-col-light;
+  text-color: @grey;
 }
 
 message {
