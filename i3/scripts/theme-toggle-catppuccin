@@ -540,6 +540,10 @@ else
   warn "kitty theme script not executable: $KITTY_THEME_SCRIPT"
 fi
 
+# Refresh GTK tray applets so their menus pick up the current theme.
+pkill -x nm-applet >/dev/null 2>&1 || true
+nohup nm-applet >/dev/null 2>&1 & disown || true
+
 sync_nvim_theme "$MODE"
 
 notify_theme "$MODE"
