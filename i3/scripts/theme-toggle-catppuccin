@@ -300,7 +300,28 @@ set_gtk4_links() {
     base_css="$src_dir/gtk-dark.css"
   fi
   if [[ -e "$base_css" ]]; then
-    ln -sfn "$base_css" "$GTK4_DIR/gtk.css"
+    if [[ -L "$GTK4_DIR/gtk.css" ]]; then
+      rm -f "$GTK4_DIR/gtk.css"
+    fi
+    cat > "$GTK4_DIR/gtk.css" <<EOF
+@import url("file://$base_css");
+
+/* Keep the theme, but avoid extra GTK4 popup/window edge artifacts. */
+window,
+window.background,
+.background,
+decoration,
+.titlebar,
+.headerbar,
+window.csd,
+.background.csd,
+.dialog-action-area,
+popover.background,
+popover.menu.background {
+  border-radius: 0;
+  box-shadow: none;
+}
+EOF
   fi
 
   dark_css="$dark_src_dir/gtk-dark.css"
@@ -308,7 +329,28 @@ set_gtk4_links() {
     dark_css="$dark_src_dir/gtk.css"
   fi
   if [[ -e "$dark_css" ]]; then
-    ln -sfn "$dark_css" "$GTK4_DIR/gtk-dark.css"
+    if [[ -L "$GTK4_DIR/gtk-dark.css" ]]; then
+      rm -f "$GTK4_DIR/gtk-dark.css"
+    fi
+    cat > "$GTK4_DIR/gtk-dark.css" <<EOF
+@import url("file://$dark_css");
+
+/* Keep the theme, but avoid extra GTK4 popup/window edge artifacts. */
+window,
+window.background,
+.background,
+decoration,
+.titlebar,
+.headerbar,
+window.csd,
+.background.csd,
+.dialog-action-area,
+popover.background,
+popover.menu.background {
+  border-radius: 0;
+  box-shadow: none;
+}
+EOF
   fi
   if [[ -d "$src_dir/assets" ]]; then
     ln -sfn "$src_dir/assets" "$GTK4_DIR/assets"
