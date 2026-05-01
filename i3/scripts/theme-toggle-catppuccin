@@ -22,6 +22,8 @@ GTK4_MODE="${CATPPUCCIN_GTK4_MODE:-override}"
 POLYBAR_THEME_DIR="$HOME/.config/polybar/themes"
 ROFI_THEME_DIR="$HOME/.config/rofi"
 I3_THEME_DIR="$HOME/.config/i3/themes/catppuccin"
+DUNST_THEME_DIR="$HOME/.config/dunst/themes"
+DUNST_THEME_DIR_REPO="$HOME/Projects/i3_setup/dunst/themes"
 REGOLITH_XRES="$HOME/.config/regolith3/Xresources"
 
 # Change these after checking `ls ~/.themes | grep -i catppuccin`
@@ -31,9 +33,9 @@ GTK_DARK="Catppuccin-Mauve-Dark-Frappe"
 ICON_LIGHT="Papirus"
 ICON_DARK="Papirus"
 
-# Change these if you install Catppuccin cursors and know the exact names.
-CURSOR_LIGHT="Yaru"
-CURSOR_DARK="Yaru"
+# Cursor themes per mode.
+CURSOR_LIGHT="DMZ-Black"
+CURSOR_DARK="DMZ-White"
 
 warn() {
   printf 'Warning: %s\n' "$*" >&2
@@ -351,6 +353,7 @@ if [[ "$MODE" == "latte" ]]; then
   POLYBAR_THEME="latte.ini"
   ROFI_THEME="cat-latte.rasi"
   I3_THEME_FILE="catppuccin-latte"
+  DUNST_THEME="latte.dunstrc"
 else
   GTK_THEME="$GTK_DARK"
   ICON_THEME="$ICON_DARK"
@@ -360,6 +363,7 @@ else
   POLYBAR_THEME="frappe.ini"
   ROFI_THEME="cat-frappe.rasi"
   I3_THEME_FILE="catppuccin-frappe"
+  DUNST_THEME="frappe.dunstrc"
 fi
 
 if ! theme_exists "$GTK_THEME"; then
@@ -488,6 +492,20 @@ PY
   fi
 else
   warn "rofi theme file not found: $ROFI_THEME_DIR/$ROFI_THEME"
+fi
+
+# Dunst theme sync (best effort)
+mkdir -p "$HOME/.config/dunst"
+if [[ -f "$DUNST_THEME_DIR/$DUNST_THEME" ]]; then
+  ln -sfn "$DUNST_THEME_DIR/$DUNST_THEME" "$HOME/.config/dunst/dunstrc"
+  pkill -x dunst >/dev/null 2>&1 || true
+  nohup dunst >/dev/null 2>&1 & disown || true
+elif [[ -f "$DUNST_THEME_DIR_REPO/$DUNST_THEME" ]]; then
+  ln -sfn "$DUNST_THEME_DIR_REPO/$DUNST_THEME" "$HOME/.config/dunst/dunstrc"
+  pkill -x dunst >/dev/null 2>&1 || true
+  nohup dunst >/dev/null 2>&1 & disown || true
+else
+  warn "dunst theme file not found in $DUNST_THEME_DIR or $DUNST_THEME_DIR_REPO"
 fi
 
 # Regolith refresh can re-apply the active Regolith profile and override

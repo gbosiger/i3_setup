@@ -12,6 +12,7 @@ ln -sfn "$ROOT/i3" "$HOME/.config/i3"
 ln -sfn "$ROOT/polybar" "$HOME/.config/polybar"
 ln -sfn "$ROOT/rofi" "$HOME/.config/rofi"
 ln -sfn "$ROOT/kitty" "$HOME/.config/kitty"
+ln -sfn "$ROOT/dunst" "$HOME/.config/dunst"
 ln -sfn "$ROOT/i3/scripts/theme-toggle-catppuccin" "$HOME/.local/bin/theme-toggle-catppuccin"
 
 XRES="$HOME/.config/regolith3/Xresources"

@@ -21,7 +21,31 @@ Bluetooth/system integrations, and default keybinding behavior can be overridden
 
 ## Packages
 ```bash
-sudo apt install kitty rofi picom polybar playerctl pulseaudio-utils fonts-font-awesome fonts-noto-color-emoji
+sudo apt install kitty rofi picom polybar playerctl pulseaudio-utils fonts-font-awesome fonts-noto-color-emoji bibata-cursor-theme
+```
+
+## Catppuccin GTK requirement
+
+This setup uses the **Catppuccin GTK theme** and switches between:
+- `latte` (light): `Catppuccin-Mauve-Light`
+- `frappe` (dark): `Catppuccin-Mauve-Dark-Frappe`
+
+Install those GTK themes first (for example under `~/.themes` or `/usr/share/themes`).
+If they are missing, `theme-toggle-catppuccin` will warn and GTK will not fully match the rest of the stack.
+
+Optional environment variables (useful for apps that read GTK vars directly):
+
+```bash
+export GTK_THEME="Catppuccin-Mauve-Dark-Frappe"
+export GTK_ICON_THEME="Papirus"
+export GTK_CURSOR_THEME="Bibata-Modern-Classic"
+```
+
+The script also supports these GTK4 controls:
+
+```bash
+export CATPPUCCIN_GTK4_OVERRIDE=1      # 1 = manage ~/.config/gtk-4.0 links
+export CATPPUCCIN_GTK4_MODE=override   # override | no-copy
 ```
 
 ## One-time bootstrap
