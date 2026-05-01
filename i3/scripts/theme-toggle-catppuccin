@@ -305,22 +305,7 @@ set_gtk4_links() {
     fi
     cat > "$GTK4_DIR/gtk.css" <<EOF
 @import url("file://$base_css");
-
-/* Keep the theme, but avoid extra GTK4 popup/window edge artifacts. */
-window,
-window.background,
-.background,
-decoration,
-.titlebar,
-.headerbar,
-window.csd,
-.background.csd,
-.dialog-action-area,
-popover.background,
-popover.menu.background {
-  border-radius: 0;
-  box-shadow: none;
-}
+@import url("file://$GTK4_DIR/no-rounded-corners.css");
 EOF
   fi
 
@@ -334,24 +319,31 @@ EOF
     fi
     cat > "$GTK4_DIR/gtk-dark.css" <<EOF
 @import url("file://$dark_css");
-
-/* Keep the theme, but avoid extra GTK4 popup/window edge artifacts. */
+@import url("file://$GTK4_DIR/no-rounded-corners.css");
+EOF
+  fi
+  cat > "$GTK4_DIR/no-rounded-corners.css" <<'EOF'
+/* Flatten GTK4 windows and menus without changing the base theme colors. */
 window,
 window.background,
-.background,
+dialog,
+dialog.background,
 decoration,
 .titlebar,
 .headerbar,
 window.csd,
 .background.csd,
-.dialog-action-area,
+popover,
 popover.background,
-popover.menu.background {
+popover.menu,
+popover.menu.background,
+popover > contents,
+popover.background > contents,
+menu,
+menuitem {
   border-radius: 0;
-  box-shadow: none;
 }
 EOF
-  fi
   if [[ -d "$src_dir/assets" ]]; then
     ln -sfn "$src_dir/assets" "$GTK4_DIR/assets"
   fi
@@ -365,6 +357,7 @@ disable_gtk4_override() {
 
   rm -f "$GTK4_DIR/gtk.css"
   rm -f "$GTK4_DIR/gtk-dark.css"
+  rm -f "$GTK4_DIR/no-rounded-corners.css"
 
   if [[ -L "$GTK4_DIR/assets" || -f "$GTK4_DIR/assets" ]]; then
     rm -f "$GTK4_DIR/assets"
