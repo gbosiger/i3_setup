@@ -2,6 +2,7 @@
 set -euo pipefail
 
 STATE_FILE="${XDG_CACHE_HOME:-$HOME/.cache}/display-mode"
+POLYBAR_LAUNCHER="$HOME/.config/polybar/launch.sh"
 ROFI_THEME='
 window { width: 360px; border-radius: 14px; padding: 18px; }
 mainbox { children: [ inputbar, listview ]; spacing: 12px; }
@@ -16,6 +17,7 @@ dual() {
     --output DP-0 --primary --auto \
     --output eDP-1-1 --auto --below DP-0
   echo dual > "$STATE_FILE"
+  relaunch_polybar
 }
 
 external() {
@@ -23,6 +25,7 @@ external() {
     --output DP-0 --primary --auto \
     --output eDP-1-1 --off
   echo external > "$STATE_FILE"
+  relaunch_polybar
 }
 
 laptop() {
@@ -30,6 +33,13 @@ laptop() {
     --output eDP-1-1 --primary --auto \
     --output DP-0 --off
   echo laptop > "$STATE_FILE"
+  relaunch_polybar
+}
+
+relaunch_polybar() {
+  if [[ -x "$POLYBAR_LAUNCHER" ]]; then
+    "$POLYBAR_LAUNCHER" >/dev/null 2>&1 & disown || true
+  fi
 }
 
 menu() {
