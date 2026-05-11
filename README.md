@@ -80,6 +80,9 @@ theme-toggle-catppuccin latte
 theme-toggle-catppuccin frappe
 ```
 
+Keyboard shortcuts:
+- `$mod+Ctrl+p`: open the Rofi CPU profile menu (`power-saver`, `balanced`, `performance`)
+
 Notes:
 - GTK4 apps may need restart for full custom CSS changes.
 - The theme script keeps `~/.config/regolith3/Xresources` in sync via a managed block.

@@ -365,6 +365,8 @@ echo "$MODE" > "$STATE_FILE"
 if [[ "$MODE" == "latte" ]]; then
   GTK_THEME="$GTK_LIGHT"
   ICON_THEME="$ICON_LIGHT"
+  GTK_ACCENT="#8839ef"
+  GTK_PREFER_DARK=0
   COLOR_SCHEME="prefer-light"
   PAPIRUS_COLOR="cat-latte-mauve"
   POLYBAR_THEME="latte.ini"
@@ -374,6 +376,8 @@ if [[ "$MODE" == "latte" ]]; then
 else
   GTK_THEME="$GTK_DARK"
   ICON_THEME="$ICON_DARK"
+  GTK_ACCENT="#ca9ee6"
+  GTK_PREFER_DARK=1
   COLOR_SCHEME="prefer-dark"
   PAPIRUS_COLOR="cat-frappe-mauve"
   POLYBAR_THEME="frappe.ini"
@@ -437,6 +441,28 @@ window.popup {
 }
 EOF
 
+python3 - "$HOME/.config/gtk-3.0/gtk.css" "$GTK_ACCENT" <<'PY'
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+accent = sys.argv[2]
+
+content = path.read_text(encoding='utf-8')
+content += """
+
+/* Match GTK4 hover accent in GTK3 dropdown menus. */
+menu menuitem:hover,
+menuitem:hover,
+.menu menuitem:hover,
+.popup menuitem:hover {{
+  color: {accent};
+}}
+""".format(accent=accent)
+
+path.write_text(content, encoding='utf-8')
+PY
+
 # GTK4 fallback: this mainly sets preference; full GTK4 theming depends on copied theme CSS.
 mkdir -p "$HOME/.config/gtk-4.0"
 cat > "$HOME/.config/gtk-4.0/settings.ini" <<EOF
@@ -460,7 +486,13 @@ mkdir -p "$HOME/.config/xsettingsd"
 cat > "$HOME/.config/xsettingsd/xsettingsd.conf" <<EOF
 Net/ThemeName "$GTK_THEME"
 Net/IconThemeName "$ICON_THEME"
+Gtk/ApplicationPreferDarkTheme $GTK_PREFER_DARK
 EOF
+
+pkill -USR1 -x xsettingsd >/dev/null 2>&1 || true
+if command -v xsettingsd >/dev/null 2>&1 && ! pgrep -x xsettingsd >/dev/null 2>&1; then
+  nohup xsettingsd -c "$HOME/.config/xsettingsd/xsettingsd.conf" >/dev/null 2>&1 & disown || true
+fi
 
 # Papirus folder color, if available
 if command -v papirus-folders >/dev/null 2>&1; then
