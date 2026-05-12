@@ -74,6 +74,51 @@ It also writes Regolith user Xresources overrides:
 
 So only Polybar is visible (no second Regolith/i3xrocks bar).
 
+## Oh My Posh in Bash
+
+Copy this file into `~/.config/ohmyposh`:
+- `ohmyposh/catppuccin.omp.json`
+
+The current Bash setup computes `OMP_LAST_CMD` and `OMP_PROMPT_MODE` directly in `.bashrc`, so the helper scripts are not required for Bash.
+
+If you want to use the helper script instead, also copy `ohmyposh/dir-change-prompt.sh` and make it executable:
+
+```bash
+chmod +x ~/.config/ohmyposh/dir-change-prompt.sh
+```
+
+Then add this to `~/.bashrc`:
+
+```bash
+export OMP_CONFIG="$HOME/.config/ohmyposh/catppuccin.omp.json"
+
+# Capture the last command from shell history and derive the prompt mode.
+__omp_export_last_command() {
+  local last
+  last="$(HISTTIMEFORMAT= history 1)"
+  last="${last#*  }"
+  export OMP_LAST_CMD="$last"
+
+  if [[ "$last" =~ ^[[:space:]]*(cd|pwd|clear|reset|cls)([[:space:]]+.*)?$ ]]; then
+    export OMP_PROMPT_MODE="full"
+  else
+    export OMP_PROMPT_MODE="compact"
+  fi
+}
+
+if [[ "$PROMPT_COMMAND" != *"__omp_export_last_command"* ]]; then
+  PROMPT_COMMAND="__omp_export_last_command${PROMPT_COMMAND:+;$PROMPT_COMMAND}"
+fi
+
+eval "$(oh-my-posh init bash --config "$OMP_CONFIG")"
+```
+
+This keeps any existing `PROMPT_COMMAND` entries intact and switches the prompt to `full` after commands like `cd`, `pwd`, `clear`, `reset`, or `cls`, and to `compact` after other commands.
+
+Notes:
+- `ohmyposh/dir-change-prompt.sh` is optional for Bash with the `.bashrc` setup above.
+- `ohmyposh/dir-change-segment.sh` is not referenced by `catppuccin.omp.json`, so it is currently unused unless you add custom command segments to the theme.
+
 ## Daily usage
 ```bash
 theme-toggle-catppuccin latte

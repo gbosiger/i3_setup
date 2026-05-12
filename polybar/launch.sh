@@ -1,18 +1,45 @@
 #!/usr/bin/env bash
 
-set -euo pipefail
+set -u
 
 killall -q polybar
 
 while pgrep -x polybar >/dev/null; do sleep 1; done
 
-primary_monitor="$(polybar --list-monitors | awk -F: '/ primary / {print $1; exit}')"
+monitors=()
 
-if [[ -z "$primary_monitor" ]]; then
-  primary_monitor="$(polybar --list-monitors | awk -F: 'NR==1 {print $1; exit}')"
+for _ in {1..10}; do
+  mapfile -t monitors < <(polybar --list-monitors)
+
+  if [[ ${#monitors[@]} -gt 0 ]]; then
+    break
+  fi
+
+  sleep 1
+done
+
+if [[ ${#monitors[@]} -eq 0 ]]; then
+  exit 0
 fi
 
-polybar --list-monitors | while IFS=: read -r monitor _; do
+primary_monitor=""
+
+for line in "${monitors[@]}"; do
+  monitor="${line%%:*}"
+
+  if [[ "$line" == *"(primary)"* ]]; then
+    primary_monitor="$monitor"
+    break
+  fi
+done
+
+if [[ -z "$primary_monitor" ]]; then
+  primary_monitor="${monitors[0]%%:*}"
+fi
+
+for line in "${monitors[@]}"; do
+  monitor="${line%%:*}"
+
   if [[ -z "$monitor" ]]; then
     continue
   fi
@@ -22,7 +49,5 @@ polybar --list-monitors | while IFS=: read -r monitor _; do
     tray_position="right"
   fi
 
-  MONITOR="$monitor" TRAY_POSITION="$tray_position" polybar main &
+  env MONITOR="$monitor" TRAY_POSITION="$tray_position" polybar main >/dev/null 2>&1 & disown || true
 done
-
-wait
